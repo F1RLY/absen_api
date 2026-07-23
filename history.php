@@ -1,19 +1,11 @@
 <?php
+require __DIR__ . '/config.php';
+
+date_default_timezone_set('Asia/Jakarta');
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET');
 header('Access-Control-Allow-Headers: Content-Type');
-
-$host = 'localhost';
-$user = 'root';
-$pass = '';
-$db   = 'db_absen';
-
-$conn = new mysqli($host, $user, $pass, $db);
-
-if ($conn->connect_error) {
-    die(json_encode(['success' => false, 'message' => 'Koneksi database gagal']));
-}
 
 $user_id = $_GET['user_id'] ?? 0;
 

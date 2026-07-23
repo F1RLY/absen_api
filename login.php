@@ -1,19 +1,10 @@
 <?php
+require __DIR__ . '/config.php';
+
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST');
 header('Access-Control-Allow-Headers: Content-Type');
-
-$host = 'localhost';
-$user = 'root';
-$pass = '';
-$db   = 'db_absen';
-
-$conn = new mysqli($host, $user, $pass, $db);
-
-if ($conn->connect_error) {
-    die(json_encode(['success' => false, 'message' => 'Koneksi database gagal']));
-}
 
 $input = json_decode(file_get_contents('php://input'), true);
 

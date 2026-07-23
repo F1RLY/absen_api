@@ -1,25 +1,12 @@
 <?php
+require __DIR__ . '/config.php';
+
 date_default_timezone_set('Asia/Jakarta');
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST');
 header('Access-Control-Allow-Headers: Content-Type');
 
-define('BASE_URL', 'https://noncharacterized-hauriant-jerilyn.ngrok-free.dev/absen_api/');
-define('UPLOAD_DIR', __DIR__ . '/uploads/');
-
-$host = 'localhost';
-$user = 'root';
-$pass = '';
-$db   = 'db_absen';
-
-$conn = new mysqli($host, $user, $pass, $db);
-
-if ($conn->connect_error) {
-    die(json_encode(['success' => false, 'message' => 'Koneksi database gagal']));
-}
-
-// Sekarang pakai $_POST & $_FILES, bukan php://input, karena multipart/form-data
 $user_id = $_POST['user_id'] ?? 0;
 $type = $_POST['type'] ?? '';
 
