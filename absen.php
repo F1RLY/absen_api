@@ -5,6 +5,9 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST');
 header('Access-Control-Allow-Headers: Content-Type');
 
+define('BASE_URL', 'https://noncharacterized-hauriant-jerilyn.ngrok-free.dev/absen_api/');
+define('UPLOAD_DIR', __DIR__ . '/uploads/');
+
 $host = 'localhost';
 $user = 'root';
 $pass = '';
@@ -16,10 +19,9 @@ if ($conn->connect_error) {
     die(json_encode(['success' => false, 'message' => 'Koneksi database gagal']));
 }
 
-$input = json_decode(file_get_contents('php://input'), true);
-
-$user_id = $input['user_id'] ?? 0;
-$type = $input['type'] ?? '';
+// Sekarang pakai $_POST & $_FILES, bukan php://input, karena multipart/form-data
+$user_id = $_POST['user_id'] ?? 0;
+$type = $_POST['type'] ?? '';
 
 if ($user_id == 0 || empty($type)) {
     echo json_encode(['success' => false, 'message' => 'User ID dan type wajib diisi']);
@@ -28,6 +30,23 @@ if ($user_id == 0 || empty($type)) {
 
 if (!in_array($type, ['masuk', 'keluar'])) {
     echo json_encode(['success' => false, 'message' => 'Type tidak valid']);
+    exit;
+}
+
+if (!isset($_FILES['photo']) || $_FILES['photo']['error'] !== UPLOAD_ERR_OK) {
+    echo json_encode(['success' => false, 'message' => 'Foto verifikasi wajib diisi']);
+    exit;
+}
+
+$allowedTypes = ['image/jpeg', 'image/png'];
+$mime = mime_content_type($_FILES['photo']['tmp_name']);
+if (!in_array($mime, $allowedTypes)) {
+    echo json_encode(['success' => false, 'message' => 'Format foto tidak didukung']);
+    exit;
+}
+
+if ($_FILES['photo']['size'] > 5 * 1024 * 1024) {
+    echo json_encode(['success' => false, 'message' => 'Ukuran foto terlalu besar (maks 5MB)']);
     exit;
 }
 
@@ -75,12 +94,30 @@ if ($type === 'keluar') {
     $checkMasuk->close();
 }
 
+if (!is_dir(UPLOAD_DIR)) {
+    mkdir(UPLOAD_DIR, 0755, true);
+}
+
+$ext = $mime === 'image/png' ? 'png' : 'jpg';
+$filename = 'absen_' . $user_id . '_' . $type . '_' . time() . '.' . $ext;
+$destination = UPLOAD_DIR . $filename;
+
+if (!move_uploaded_file($_FILES['photo']['tmp_name'], $destination)) {
+    echo json_encode(['success' => false, 'message' => 'Gagal menyimpan foto']);
+    exit;
+}
+
 $timestamp = date('Y-m-d H:i:s');
-$stmt = $conn->prepare("INSERT INTO attendance (user_id, type, timestamp) VALUES (?, ?, ?)");
-$stmt->bind_param("iss", $user_id, $type, $timestamp);
+$stmt = $conn->prepare("INSERT INTO attendance (user_id, type, timestamp, photo) VALUES (?, ?, ?, ?)");
+$stmt->bind_param("isss", $user_id, $type, $timestamp, $filename);
 
 if ($stmt->execute()) {
-    echo json_encode(['success' => true, 'message' => 'Absen berhasil', 'id' => $stmt->insert_id]);
+    echo json_encode([
+        'success' => true,
+        'message' => 'Absen berhasil',
+        'id' => $stmt->insert_id,
+        'photo_url' => BASE_URL . 'uploads/' . $filename,
+    ]);
 } else {
     echo json_encode(['success' => false, 'message' => 'Gagal menyimpan absen: ' . $stmt->error]);
 }

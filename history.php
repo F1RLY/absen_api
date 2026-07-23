@@ -23,7 +23,7 @@ if ($user_id == 0) {
     exit;
 }
 
-$query = "SELECT id, user_id, type, timestamp FROM attendance WHERE user_id = ? ORDER BY timestamp DESC";
+$query = "SELECT id, user_id, type, timestamp, photo FROM attendance WHERE user_id = ? ORDER BY timestamp DESC";
 $stmt = $conn->prepare($query);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
@@ -33,9 +33,10 @@ $data = [];
 while ($row = $result->fetch_assoc()) {
     $data[] = [
         'id' => (int)$row['id'],
-        'user_id' => (int)$row['user_id'],  // Pasti ada dan integer
+        'user_id' => (int)$row['user_id'],
         'type' => $row['type'],
-        'timestamp' => $row['timestamp']
+        'timestamp' => $row['timestamp'],
+        'photo_url' => $row['photo'] ? BASE_URL . 'uploads/' . $row['photo'] : null,
     ];
 }
 
